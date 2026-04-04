@@ -1,5 +1,5 @@
 import os
-
+import re
 
 class Markdown:
   def __init__(self, output_path: str):
@@ -49,6 +49,23 @@ class Markdown:
   def header(text: str, level: int = 1):
     return f"{'#'*level} {text}"
 
+def is_comment(text: str, lang: str) -> bool:
+  if lang == "cpp":
+    pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//.*?)"
+    return re.match(pattern, text).group(2)
+
+  if lang == "py":
+    pattern = r"(\"\"\".*?\"\"\"|\'\'\'.*?\'\'\'|#.*?)"
+    return re.match(pattern, text).group(0)
+
+  return NotImplementedError(f"Language {lang} is not supported.")
+
+def split_extension(text: str) -> tuple[str, str]:
+  last_dot = text.rfind(".")
+  if last_dot == -1:
+    return (text, None)
+  
+  return (text[:last_dot], text[last_dot+1:])
 
 def parse_file(path: str) -> str:
   filename = os.path.basename(path)
@@ -56,6 +73,10 @@ def parse_file(path: str) -> str:
     # grab comment on first line
     first_line = f.readline()
   
+  basename, ext = split_extension(filename)
+  if not is_comment(first_line, ext):
+    return filename
+
   prefixes = ["\"\"\"", "\'\'\'", "/*", "//", "#"]
   suffixes = ["\"\"\"", "\'\'\'", "*/"]
   first_line = first_line.strip()
