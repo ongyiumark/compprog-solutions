@@ -77,6 +77,8 @@ Usage Instructions
 ---
 This section is mainly for my future self, but this also serves as instructions       for anyone who wants to clone this repository to track their own solutions.
 
-To update the README, simply run `update_readme.py`. This will crawl the target folders and update the the README accordingly.       The target directories can have any number of subdirectories for organization, but the final directory (i.e., the directory that contains files)       must follow a specific format, depending on the website. For AtCoder, this is the name of the contest as it appears in the URL.
+To update the README, simply run `update_readme.py`. This will crawl the target folders and update the the README accordingly.       The target directories can have any number of subdirectories for organization, but the final directory (i.e., the directory that contains files)       must follow a specific format, depending on the website.
+- For AtCoder, this is the name of the contest as it appears in the URL.
+- For Codeforces, a prefix is added to differentiate it from other contests. For Codeforces regular contests, a 'CFC' prefix is used.
 
 To add sections to the README, you must add lines to the `update_readme.py` file directly. There is a `Markdown` class in `utils.py` with helper functions for       different markdown syntax.
