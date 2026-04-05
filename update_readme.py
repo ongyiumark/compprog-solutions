@@ -7,14 +7,31 @@ from utils import Markdown
 
 import pandas as pd
 
-ATCODER_CONTESTS_CACHE = "contest_data/atcoder_contests.csv"
-ATCODER_CONTEST_DETAILS_CACHE = "contest_data/atcoder_contest_details.csv"
-ATCODER_PATH = "AtCoder/"
-atcoder_contests = None
-atcoder_contest_details = None
+CONTESTS_CACHE = "contest_data/contests.csv"
+CONTEST_DETAILS_CACHE = "contest_data/contest_details.csv"
+ATCODER_PATH = "AtCoder"
+contests = None
+contest_details = None
 
+def usage_instructions() -> str:
+  lines = [
+    "Usage Instructions",
+    Markdown.hrule(),
+    "This section is mainly for my future self, but this also serves as instructions \
+      for anyone who wants to clone this repository to track their own solutions.",
+    "",
+    "To update the README, simply run `update_readme.py`. This will crawl the target folders and update the the README accordingly. \
+      The target directories can have any number of subdirectories for organization, but the final directory (i.e., the directory that contains files) \
+      must follow a specific format, depending on the website. For AtCoder, this is the name of the contest as it appears in the URL.",
+    "",
+    "To add sections to the README, you must add lines to the `update_readme.py` file directly. There is a `Markdown` class in `utils.py` with helper functions for \
+      different markdown syntax."
+  ]
+
+  return "\n".join(lines);
 
 def is_comment(text: str, lang: str) -> bool:
+  """Checks if the text is a comment in the specified language."""
   if lang == "cpp":
     pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//.*?)"
     return re.match(pattern, text).group(2)
@@ -26,6 +43,7 @@ def is_comment(text: str, lang: str) -> bool:
   return NotImplementedError(f"Language {lang} is not supported.")
 
 def split_extension(text: str) -> tuple[str, str]:
+  """Returns the base name and the extension of a file name."""
   last_dot = text.rfind(".")
   if last_dot == -1:
     return (text, None)
@@ -33,6 +51,7 @@ def split_extension(text: str) -> tuple[str, str]:
   return (text[:last_dot], text[last_dot+1:])
 
 def get_link(path: str) -> str:
+  """Retrieves the text on the first line of the file if its a comment."""
   with open(path, "r") as f:
     # grab comment on first line
     first_line = f.readline()
@@ -52,14 +71,33 @@ def get_link(path: str) -> str:
   
   return href
 
+def count_files(directory: str) -> int:
+  "Returns the number of unique tasks in the directory."
+  total = 0
+  for _, _, filenames in os.walk(directory):
+    if len(filenames) == 0:
+      continue
+    
+    tasks = set()
+    for name in filenames:
+      basename, _ = split_extension(name)
+      _, task_code = basename.split("_", 1)
+      task_code = task_code.split("_", 1)[0]
+      
+      tasks.add(task_code)
+
+    total += len(tasks)
+  return total
+
 def dir_to_collapsed_section(directory: str, start_level: int, file_parser: typing.Callable[[str], str]):
+  """Generates a collapsed section based on the directory."""
   def traverse(path: str, level: str) -> str:
     files_and_dir = sorted(os.listdir(path))
     
     lines = []
     for fd in files_and_dir:
       if os.path.isdir(os.path.join(path, fd)):
-        result = traverse(os.path.join(path, fd)+"/", level+1)
+        result = traverse(os.path.join(path, fd), level+1)
         lines.extend(result.split("\n"))
       else:
         lines.append(f"- {file_parser(os.path.join(path, fd))}")
@@ -67,49 +105,70 @@ def dir_to_collapsed_section(directory: str, start_level: int, file_parser: typi
     if level < start_level:
       return "\n".join(lines)
 
-    immediate_dir = path.rsplit("/", 2)[-2]
-
-    if immediate_dir in atcoder_contests["contest_name"]:
-      immediate_dir = immediate_dir + " - " + atcoder_contests["contest_name"][immediate_dir]
     section = Markdown.collapsed_section(
-      summary=immediate_dir,
+      summary=atcoder_parser(path),
       lines=lines
     )
     return section
   
   return traverse(directory, 0)
 
+def load_cache():
+  """Loads cached names and links from contest data."""
+  global contests
+  global contest_details
+  contests = pd.read_csv(CONTESTS_CACHE).set_index("contest_code").to_dict()
+  contest_details = pd.read_csv(CONTEST_DETAILS_CACHE).set_index(["contest_code", "task_code"]).to_dict()
+
 def atcoder_parser(path: str) -> str:
-  filename = os.path.basename(path)
-  basename, ext = split_extension(filename)
-  contest_code, task_code = basename.split("_")
+  if os.path.isfile(path):
+    filename = os.path.basename(path)
+    basename, _ = split_extension(filename)
+    contest_code, task_code = basename.split("_", 1)
+    task_code = task_code.split("_", 1)[0]
 
-  task_name = atcoder_contest_details["task_name"][(contest_code, task_code)]
-  task_link = f"https://atcoder.jp{atcoder_contest_details["task_link"][(contest_code, task_code)]}"
+    task_name = contest_details["task_name"][(contest_code, task_code)]
+    task_link = f"https://atcoder.jp{contest_details["task_link"][(contest_code, task_code)]}"
 
-  return filename + " - " + Markdown.link(text=task_name, href=task_link)
+    return f"{filename} - {Markdown.link(text=task_name, href=task_link)}"
+
+  dirname = os.path.basename(path)
+  if dirname in contests["contest_name"]:
+    dirname = f"{dirname} - {contests["contest_name"][dirname]}"
+  return dirname
+
 
 def main():
   subprocess.run(["python3", "update_links.py"])
-  readme = Markdown("README.md")
-  readme.add_lines(
-    [
-      Markdown.header("Competitive Programming Solutions", level=1),
-      "This is an archive of the problems that I've solved."
-    ]
-  )
+  load_cache()
 
-  global atcoder_contests
-  global atcoder_contest_details
-  atcoder_contests = pd.read_csv(ATCODER_CONTESTS_CACHE).set_index("contest_code").to_dict()
-  atcoder_contest_details = pd.read_csv(ATCODER_CONTEST_DETAILS_CACHE).set_index(["contest_code", "task_code"]).to_dict()
+  stat_table = Markdown.table(
+    header=["Category", "Number Solved"],
+    alignment=["c", "c"],
+    data=[[ATCODER_PATH], [str(count_files(ATCODER_PATH))]]
+  )
 
   atcoder_section = dir_to_collapsed_section(
     ATCODER_PATH, 
     start_level=0,
     file_parser=atcoder_parser
   )
-  readme.add_line(atcoder_section)
+
+  readme = Markdown("README.md")
+  readme.add_lines(
+    [
+      Markdown.header("Competitive Programming Solutions", level=1),
+      "This is an archive of the problems that I've solved starting Apr 2026.",
+      "",
+      stat_table,
+      "",
+      "All Problems",
+      Markdown.hrule(),
+      atcoder_section,
+      "",
+      usage_instructions()
+    ]
+  )
   readme.write()
 
 

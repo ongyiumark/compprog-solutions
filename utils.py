@@ -1,3 +1,5 @@
+from typing import Literal
+
 class Markdown:
   def __init__(self, output_path: str):
     self.output_path = output_path
@@ -46,29 +48,67 @@ class Markdown:
   def header(text: str, level: int = 1):
     return f"{'#'*level} {text}"
   
-class AtCoderTask:
+  @staticmethod
+  def table(header: list[str], alignment: list[Literal["l","r","c"]], data: list[list[str]]):
+    if len(header) != len(alignment):
+      raise RuntimeError(f"Header has {len(header)} columns, but data has {len(alignment)}.")
+    
+    if len(header) != len(data):
+      raise RuntimeError(f"Header has {len(header)} columns, but data has {len(data)}.")
+    
+    if len(header) == 0:
+      raise RuntimeError("Number of columns must be 1 or greater.")
+    
+    h = len(data[0])
+    for i in range(1, len(data)):
+      if h != len(data[i]):
+        raise RuntimeError("Number of rows must be the same for all columns.")
+    
+    allowed_alignment = set(["l", "r", "c"])
+    for a in alignment:
+      if a not in allowed_alignment:
+        raise RuntimeError(f"Unknown alignement '{a}'.")
+
+    def map_alignment(ch: Literal["l", "r", "c"]):
+      if ch == "l": return ":-"
+      elif ch == "r": return "-:"
+      else: return ":-:"
+
+    lines = [
+      f"|{'|'.join(header)}|",
+      f"|{'|'.join([map_alignment(a) for a in alignment])}|",
+      *[f"|{'|'.join(row)}|" for row in zip(*data)]
+    ]
+    return '\n'.join(lines)
+  
+  @staticmethod
+  def hrule():
+    return "---"
+  
+
+class Task:
   def __init__(self, task_code, task_name, task_link):
     self.task_code = task_code
     self.task_name = task_name
     self.task_link = task_link
   
   def __repr__(self):
-    return f"<AtCoderTask {self.task_code} - {self.task_name}>"
+    return f"<Task {self.task_code} - {self.task_name}>"
 
-class AtCoderContest:
+class Contest:
   def __init__(self, contest_code, contest_name):
     self.contest_code = contest_code
     self.contest_name = contest_name
     self.tasks = []
   
   def __repr__(self):
-    return f"<AtCoderContest {self.contest_code} - {self.contest_name}>"
+    return f"<Contest {self.contest_code} - {self.contest_name}>"
 
   def __len__(self):
     return len(self.tasks)
 
-  def add_task(self, task: AtCoderTask):
+  def add_task(self, task: Task):
     self.tasks.append(task)
   
-  def add_tasks(self, tasks: list[AtCoderTask]):
+  def add_tasks(self, tasks: list[Task]):
     self.tasks.extend(tasks)

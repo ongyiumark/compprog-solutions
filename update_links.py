@@ -7,13 +7,24 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import tqdm
 
-from utils import AtCoderTask, AtCoderContest
+from utils import Task, Contest
 
-ATCODER_CONTESTS_CACHE = "contest_data/atcoder_contests.csv"
-ATCODER_CONTEST_DETAILS_CACHE = "contest_data/atcoder_contest_details.csv"
-ATCODER_PATH = "AtCoder/"
+CONTESTS_CACHE = "contest_data/contests.csv"
+CONTEST_DETAILS_CACHE = "contest_data/contest_details.csv"
+ATCODER_PATH = "AtCoder"
 
-def get_atcoder_contest_details(task_url: str) -> AtCoderContest:
+def get_contest_codes_from_directory(directory: str) -> list[str]:
+  contest_codes = []
+  for dirpath, _, filenames in os.walk(directory):
+    if len(filenames) == 0:
+      continue
+    
+    base_dirname = os.path.basename(dirpath)
+    contest_codes.append(base_dirname)
+  
+  return contest_codes
+
+def get_atcoder_contest_details(task_url: str) -> Contest:
   response = requests.get(task_url)
   soup = BeautifulSoup(response.text, features="html.parser")
 
@@ -21,7 +32,7 @@ def get_atcoder_contest_details(task_url: str) -> AtCoderContest:
   contest_name = contest_title_tag.text
   contest_code = contest_title_tag.get("href").rsplit("/", 1)[-1].upper()
 
-  contest = AtCoderContest(
+  contest = Contest(
     contest_code=contest_code,
     contest_name=contest_name
   )
@@ -30,7 +41,7 @@ def get_atcoder_contest_details(task_url: str) -> AtCoderContest:
     data = row.find_all("td")
     task_code, task_name, *_ = [d.text for d in data]
     task_link = data[0].contents[0].get("href")
-    task = AtCoderTask(
+    task = Task(
       task_code=task_code,
       task_name=task_name,
       task_link=task_link
@@ -39,13 +50,13 @@ def get_atcoder_contest_details(task_url: str) -> AtCoderContest:
 
   return contest
 
-def cache_atcoder_contests(contests: AtCoderContest, atcoder_contests_df: Optional[pd.DataFrame] = None, atcoder_contest_details_df: Optional[pd.DataFrame] = None):
-  if atcoder_contests_df is None:
-    atcoder_contests_df = pd.read_csv(ATCODER_CONTESTS_CACHE)
-  if atcoder_contest_details_df is None:
-    atcoder_contest_details_df = pd.read_csv(ATCODER_CONTEST_DETAILS_CACHE)
+def cache_contests(contests: Contest, contests_df: Optional[pd.DataFrame] = None, contest_details_df: Optional[pd.DataFrame] = None):
+  if contests_df is None:
+    contests_df = pd.read_csv(CONTESTS_CACHE)
+  if contest_details_df is None:
+    contest_details_df = pd.read_csv(CONTEST_DETAILS_CACHE)
   
-  cached_contests = set(atcoder_contests_df["contest_code"].values)
+  cached_contests = set(contests_df["contest_code"].values)
 
   contest_codes = []
   contest_names = []
@@ -62,8 +73,8 @@ def cache_atcoder_contests(contests: AtCoderContest, atcoder_contests_df: Option
     contest_names.append(contest.contest_name)
 
     # drop contest details with this contest code
-    indices_to_drop = atcoder_contest_details_df[atcoder_contest_details_df["contest_code"]==contest.contest_code].index
-    atcoder_contest_details_df.drop(indices_to_drop, inplace=True)
+    indices_to_drop = contest_details_df[contest_details_df["contest_code"]==contest.contest_code].index
+    contest_details_df.drop(indices_to_drop, inplace=True)
 
     for task in contest.tasks:
       task_contest_codes.append(contest.contest_code)
@@ -72,11 +83,11 @@ def cache_atcoder_contests(contests: AtCoderContest, atcoder_contests_df: Option
       task_links.append(task.task_link)
 
   new_contest_df = pd.concat([
-    atcoder_contests_df,
+    contests_df,
     pd.DataFrame({"contest_code": contest_codes, "contest_name": contest_names})
   ])
   new_details_df = pd.concat([
-    atcoder_contest_details_df,
+    contest_details_df,
     pd.DataFrame({
       "contest_code": task_contest_codes,
       "task_code": task_codes,
@@ -84,22 +95,21 @@ def cache_atcoder_contests(contests: AtCoderContest, atcoder_contests_df: Option
       "task_link": task_links
     })
   ])
-  atcoder_contests_df = new_contest_df
-  atcoder_contest_details_df = new_details_df
+  contests_df = new_contest_df
+  contest_details_df = new_details_df
 
-  atcoder_contests_df.to_csv(ATCODER_CONTESTS_CACHE, index=False)
-  atcoder_contest_details_df.to_csv(ATCODER_CONTEST_DETAILS_CACHE, index=False)
+  contests_df.to_csv(CONTESTS_CACHE, index=False)
+  contest_details_df.to_csv(CONTEST_DETAILS_CACHE, index=False)
 
-def cache_abc(nums: list[int]):
-  task_urls = [f"https://atcoder.jp/contests/abc{str(i).rjust(3, '0')}/tasks" for i in nums]
-  atcoder_contest_df = pd.read_csv(ATCODER_CONTESTS_CACHE)
-  cached_contests = set(atcoder_contest_df["contest_code"].values)
+def cache_atcoder_contests(contest_codes: list[str]):
+  task_urls = [f"https://atcoder.jp/contests/{contest_code}/tasks" for contest_code in contest_codes]
+  contest_df = pd.read_csv(CONTESTS_CACHE)
+  cached_contests = set(contest_df["contest_code"].values)
 
-  is_cached_list = [f"ABC{str(i).rjust(3, '0')}" in cached_contests for i in nums]
+  is_cached_list = [contest_code in cached_contests for contest_code in contest_codes]
 
   contests = []
-
-  for url, is_cached in tqdm.tqdm(list(zip(task_urls, is_cached_list)), desc="Caching ABC"):
+  for url, is_cached in tqdm.tqdm(list(zip(task_urls, is_cached_list)), desc="Caching AtCoder"):
     if is_cached:
       print(f"Using cache for {url}.")
       continue
@@ -109,23 +119,13 @@ def cache_abc(nums: list[int]):
       contests.append(contest)
     except:
       print(f"Failed to get {url}.")
-    
-
   
-  cache_atcoder_contests(contests, atcoder_contests_df=atcoder_contest_df)
+  cache_contests(contests, contests_df=contest_df)
 
 
 def main():
-  abc_nums = []
-  for dirpath, dirnames, filenames in os.walk(ATCODER_PATH):
-    if len(filenames) == 0:
-      continue
-    
-    base_dirname = os.path.basename(dirpath)
-    if re.match(r"^ABC[0-9]{3}$", base_dirname):
-      val = int(base_dirname[-3:])
-      abc_nums.append(val)
-  cache_abc(abc_nums)
+  atcoder_codes = get_contest_codes_from_directory(ATCODER_PATH)
+  cache_atcoder_contests(atcoder_codes)
 
 
 if __name__ == "__main__":
