@@ -4,7 +4,11 @@ import typing
 import subprocess
 
 from utils import Markdown
-from utils import CONTESTS_CACHE, CONTEST_DETAILS_CACHE, ATCODER_PATH, CODEFORCES_PATH
+from utils import (
+  CONTESTS_CACHE, CONTEST_DETAILS_CACHE, 
+  ATCODER_PATH, CODEFORCES_PATH,
+  ATCODER_DOMAIN, CODEFORCES_DOMAIN
+)
 
 import pandas as pd
 
@@ -155,58 +159,54 @@ def atcoder_cf_parser(path: str, base_link: str) -> str:
   return dirname
 
 
-def all_problems_section() -> str:
-  atcoder_section = dir_to_collapsed_section(
-    ATCODER_PATH, 
-    start_level=0,
-    file_parser=lambda x: atcoder_cf_parser(x, base_link="https://atcoder.jp")
-  )
-
-  codeforces_section = dir_to_collapsed_section(
-    CODEFORCES_PATH,
-    start_level=0,
-    file_parser=lambda x: atcoder_cf_parser(x, base_link="https://codeforces.com")
-  )
+def all_problems_section(targets: list[tuple[str,str]]) -> str:
+  collapsed_sections = []
+  for path, base_link in targets:
+    current_section = dir_to_collapsed_section(
+      path, 
+      start_level=0,
+      file_parser=lambda x: atcoder_cf_parser(x, base_link=base_link)
+    )
+    collapsed_sections.append(current_section)
 
   return "\n".join([
     "All Problems",
     Markdown.hrule(),
-    atcoder_section,
-    codeforces_section
+    *collapsed_sections
   ])
 
-def missing_problems_section(target_folder: list[str]) -> str:
-  missing_problems = []
-  for folder in target_folder:
-    missing_problems.extend(get_missing_tasks_fom_dir(folder))
-  
-  if len(missing_problems) == 0:
-    return ""
-  
-  missing_problems.sort()
-  missing_problems_by_contest = dict()
-  for key, value in missing_problems:
-    missing_problems_by_contest.setdefault(key, []).append(value)
-  
-  contests_lines = []
-  for contest_code, tasks in missing_problems_by_contest.items():
-    task_lines = []
-    for task_code in tasks:
-      task_name = contest_details["task_name"][(contest_code, task_code)]
-      task_link = contest_details["task_link"][(contest_code, task_code)]
-      task_lines.append(f"- {task_code} - {Markdown.link(text=task_name, href=task_link)}")
+def missing_problems_section(targets: list[tuple[str,str]]) -> str:
+  contest_lines = []
+  for path, base_link in targets:
+    missing_problems = get_missing_tasks_fom_dir(path)
+    if len(missing_problems) == 0:
+      continue
+    
+    missing_problems.sort()
+    missing_problems_by_contest = dict()
+    for key, value in missing_problems:
+      missing_problems_by_contest.setdefault(key, []).append(value)
+    
+    for contest_code, tasks in missing_problems_by_contest.items():
+      task_lines = []
+      for task_code in tasks:
+        task_name = contest_details["task_name"][(contest_code, task_code)]
+        task_link = contest_details["task_link"][(contest_code, task_code)]
+        task_lines.append(f"- {task_code} - {Markdown.link(text=task_name, href=f"{base_link}{task_link}")}")
 
-    collapsed_contest = Markdown.collapsed_section(
-      summary=f"{contest_code} - {contests["contest_name"][contest_code]}",
-      lines=task_lines
-    )
-    contests_lines.append(collapsed_contest)
+      collapsed_contest = Markdown.collapsed_section(
+        summary=f"{contest_code} - {contests["contest_name"][contest_code]}",
+        lines=task_lines
+      )
+      contest_lines.append(collapsed_contest)
 
+  if len(contest_lines) == 0:
+    return 0
   
   return "\n".join([
     "To Upsolve",
     Markdown.hrule(),
-    *contests_lines
+    *contest_lines
   ])
 
 def usage_instructions() -> str:
@@ -234,6 +234,8 @@ def main():
   load_cache()
   
   target_folders = [ATCODER_PATH, CODEFORCES_PATH]
+  target_domains = [ATCODER_DOMAIN, CODEFORCES_DOMAIN]
+  targets = list(zip(target_folders, target_domains))
 
   stat_table = Markdown.table(
     header=["Category", "Number Solved"],
@@ -249,9 +251,9 @@ def main():
       "",
       stat_table,
       "",
-      all_problems_section(),
+      all_problems_section(targets=targets),
       "",
-      missing_problems_section(target_folders),
+      missing_problems_section(targets=targets),
       "",
       usage_instructions()
     ]

@@ -87,8 +87,8 @@ To Upsolve
 <details>
 <summary>ABC449 - AtCoder Beginner Contest 449</summary>
 
-- F - [Grid Clipping](/contests/ABC449/tasks/abc449_f)
-- G - [Many Repunit Sum 2 ](/contests/ABC449/tasks/abc449_g)
+- F - [Grid Clipping](https://atcoder.jp/contests/ABC449/tasks/abc449_f)
+- G - [Many Repunit Sum 2 ](https://atcoder.jp/contests/ABC449/tasks/abc449_g)
 </details>
 
 Usage Instructions
