@@ -3,7 +3,7 @@ This is an archive of the problems that I've solved starting Apr 2026.
 
 |Category|Number Solved|
 |:-:|:-:|
-|AtCoder|27|
+|AtCoder|32|
 |Codeforces|7|
 
 All Problems
@@ -57,6 +57,15 @@ All Problems
 - [ABC452_F.cpp](/AtCoder/ABC%20400-499/ABC452/ABC452_F.cpp) - [Interval Inversion Count](https://atcoder.jp/contests/ABC452/tasks/abc452_f)
 - [ABC452_G.cpp](/AtCoder/ABC%20400-499/ABC452/ABC452_G.cpp) - [221 Substring](https://atcoder.jp/contests/ABC452/tasks/abc452_g)
 </details>
+<details>
+<summary>ABC453 - AtCoder Beginner Contest 453</summary>
+
+- [ABC453_A.py](/AtCoder/ABC%20400-499/ABC453/ABC453_A.py) - [Trimo](https://atcoder.jp/contests/ABC453/tasks/abc453_a)
+- [ABC453_B.cpp](/AtCoder/ABC%20400-499/ABC453/ABC453_B.cpp) - [Sensor Data Logging](https://atcoder.jp/contests/ABC453/tasks/abc453_b)
+- [ABC453_C.cpp](/AtCoder/ABC%20400-499/ABC453/ABC453_C.cpp) - [Sneaking Glances](https://atcoder.jp/contests/ABC453/tasks/abc453_c)
+- [ABC453_D.cpp](/AtCoder/ABC%20400-499/ABC453/ABC453_D.cpp) - [Go Straight](https://atcoder.jp/contests/ABC453/tasks/abc453_d)
+- [ABC453_E.cpp](/AtCoder/ABC%20400-499/ABC453/ABC453_E.cpp) - [Team Division](https://atcoder.jp/contests/ABC453/tasks/abc453_e)
+</details>
 </details>
 </details>
 <details>
@@ -89,6 +98,12 @@ To Upsolve
 <summary>ABC449 - AtCoder Beginner Contest 449</summary>
 
 - G - [Many Repunit Sum 2 ](https://atcoder.jp/contests/ABC449/tasks/abc449_g)
+</details>
+<details>
+<summary>ABC453 - AtCoder Beginner Contest 453</summary>
+
+- F - [Avoid Division](https://atcoder.jp/contests/ABC453/tasks/abc453_f)
+- G - [Copy Query](https://atcoder.jp/contests/ABC453/tasks/abc453_g)
 </details>
 
 Usage Instructions
