@@ -4,7 +4,7 @@ This is an archive of the problems that I've solved starting Apr 2026.
 |Category|Number Solved|
 |:-:|:-:|
 |AtCoder|40|
-|Codeforces|7|
+|Codeforces|12|
 
 All Problems
 ---
@@ -87,6 +87,19 @@ All Problems
 <summary>Contests</summary>
 
 <details>
+<summary>Division 2</summary>
+
+<details>
+<summary>CFC2220 - Codeforces Round 1093 (Div. 2)</summary>
+
+- [CFC2220_A.cpp](/Codeforces/Contests/Division%202/CFC2220/CFC2220_A.cpp) - [Blocked](https://codeforces.com/contest/2220/problem/A)
+- [CFC2220_B.cpp](/Codeforces/Contests/Division%202/CFC2220/CFC2220_B.cpp) - [OIE Excursion](https://codeforces.com/contest/2220/problem/B)
+- [CFC2220_C.cpp](/Codeforces/Contests/Division%202/CFC2220/CFC2220_C.cpp) - [Grid L](https://codeforces.com/contest/2220/problem/C)
+- [CFC2220_D1.cpp](/Codeforces/Contests/Division%202/CFC2220/CFC2220_D1.cpp) - [Unique Values (Easy version)](https://codeforces.com/contest/2220/problem/D1)
+- [CFC2220_D2.cpp](/Codeforces/Contests/Division%202/CFC2220/CFC2220_D2.cpp) - [Unique Values (Hard version)](https://codeforces.com/contest/2220/problem/D2)
+</details>
+</details>
+<details>
 <summary>Division 4</summary>
 
 <details>
@@ -115,6 +128,12 @@ To Upsolve
 <summary>ABC453 - AtCoder Beginner Contest 453</summary>
 
 - F - [Avoid Division](https://atcoder.jp/contests/ABC453/tasks/abc453_f)
+</details>
+<details>
+<summary>CFC2220 - Codeforces Round 1093 (Div. 2)</summary>
+
+- E - [Coloring a Red Black Tree](https://codeforces.com/contest/2220/problem/E)
+- F - [MEX Replacement on Tree](https://codeforces.com/contest/2220/problem/F)
 </details>
 
 Usage Instructions
